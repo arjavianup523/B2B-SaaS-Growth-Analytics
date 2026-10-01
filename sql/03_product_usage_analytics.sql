@@ -1,3 +1,5 @@
+-- Product usage analytics
+
 SELECT
     COUNT(*) AS total_usage_records
 FROM product_usage;

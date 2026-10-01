@@ -1,3 +1,5 @@
+-- Customer and subscription analytics
+
 SELECT
     COUNT(*) AS total_customers,
     COUNT(DISTINCT country) AS countries,
@@ -16,7 +18,7 @@ ORDER BY signup_month;
 SELECT
     plan,
     COUNT(*) AS total_subscriptions,
-    ROUND(AVG(price), 2) AS average_price
+    ROUND(AVG(monthly_price), 2) AS average_monthly_price
 FROM subscriptions
 GROUP BY plan
 ORDER BY total_subscriptions DESC;
@@ -128,23 +130,23 @@ SELECT
     c.industry,
     c.country,
     s.plan,
-    s.price,
+    s.monthly_price,
     s.start_date,
     s.status
 FROM customers c
 JOIN subscriptions s
     ON c.customer_id = s.customer_id
 WHERE s.status = 'Active'
-ORDER BY s.price DESC;
+ORDER BY s.monthly_price DESC;
 
 
 SELECT
     s.plan,
-    ROUND(AVG(s.price), 2) AS average_price,
-    ROUND(SUM(s.price), 2) AS total_subscription_value
+    ROUND(AVG(s.monthly_price), 2) AS average_monthly_price,
+    ROUND(SUM(s.monthly_price), 2) AS total_monthly_subscription_value
 FROM subscriptions s
 GROUP BY s.plan
-ORDER BY total_subscription_value DESC;
+ORDER BY total_monthly_subscription_value DESC;
 
 
 SELECT

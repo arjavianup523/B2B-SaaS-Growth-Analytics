@@ -1,3 +1,5 @@
+-- Core revenue, subscription and customer metrics
+
 SELECT
     COUNT(*) AS total_customers
 FROM customers;
@@ -65,12 +67,8 @@ SELECT
     status,
     COUNT(*) AS subscription_count
 FROM subscriptions
-GROUP BY
-    plan,
-    status
-ORDER BY
-    plan,
-    status;
+GROUP BY plan, status
+ORDER BY plan, status;
 
 
 SELECT
@@ -98,10 +96,10 @@ ORDER BY churn_rate_percent DESC;
 
 SELECT
     plan,
-    ROUND(AVG(price), 2) AS average_price
+    ROUND(AVG(monthly_price), 2) AS average_monthly_price
 FROM subscriptions
 GROUP BY plan
-ORDER BY average_price DESC;
+ORDER BY average_monthly_price DESC;
 
 
 SELECT
@@ -143,7 +141,7 @@ SELECT
     c.country,
     s.plan,
     s.status,
-    s.price,
+    s.monthly_price,
     s.start_date,
     s.end_date
 FROM customers c
