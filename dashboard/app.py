@@ -1,3 +1,11 @@
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import pandas as pd
 import streamlit as st
 from sqlalchemy import create_engine
@@ -19,7 +27,6 @@ st.set_page_config(
 
 
 def create_database_engine():
-
     connection_url = (
         f"mysql+pymysql://"
         f"{DB_USER}:{DB_PASSWORD}@"
@@ -35,7 +42,6 @@ def create_database_engine():
 
 @st.cache_data
 def load_data():
-
     engine = create_database_engine()
 
     customers = pd.read_sql(
@@ -71,14 +77,11 @@ def main():
     st.title("📊 B2B SaaS Growth Analytics")
 
     st.markdown(
-        "Automated customer, revenue, subscription and product usage analytics."
+        "Automated customer, revenue, subscription and "
+        "product usage analytics."
     )
 
     customers, subscriptions, transactions, product_usage = load_data()
-
-    # ---------------------------------------------------------
-    # DATA PREPARATION
-    # ---------------------------------------------------------
 
     transactions["transaction_date"] = pd.to_datetime(
         transactions["transaction_date"]
@@ -96,42 +99,30 @@ def main():
         product_usage["usage_month"]
     )
 
-    # ---------------------------------------------------------
-    # CORE BUSINESS METRICS
-    # ---------------------------------------------------------
-
     total_revenue = transactions["amount"].sum()
 
     total_customers = customers["customer_id"].nunique()
 
-    active_subscriptions = (
-        subscriptions["status"]
-        .eq("Active")
-        .sum()
-    )
+    active_subscriptions = subscriptions[
+        subscriptions["status"] == "Active"
+    ].shape[0]
 
-    total_transactions = transactions["transaction_id"].nunique()
+    total_transactions = transactions[
+        "transaction_id"
+    ].nunique()
 
-    # MRR = current active subscription monthly revenue
-    mrr = (
-        subscriptions.loc[
-            subscriptions["status"] == "Active",
-            "monthly_price"
-        ]
-        .sum()
-    )
+    mrr = subscriptions.loc[
+        subscriptions["status"] == "Active",
+        "monthly_price"
+    ].sum()
 
-    # ARR = MRR × 12
     arr = mrr * 12
 
-    # Churn rate
     total_subscriptions = len(subscriptions)
 
-    cancelled_subscriptions = (
-        subscriptions["status"]
-        .eq("Cancelled")
-        .sum()
-    )
+    cancelled_subscriptions = subscriptions[
+        subscriptions["status"] == "Cancelled"
+    ].shape[0]
 
     churn_rate = (
         cancelled_subscriptions
@@ -139,8 +130,9 @@ def main():
         * 100
     )
 
-    # Average revenue per paying customer
-    paying_customers = transactions["customer_id"].nunique()
+    paying_customers = transactions[
+        "customer_id"
+    ].nunique()
 
     average_revenue_per_customer = (
         total_revenue / paying_customers
@@ -148,7 +140,6 @@ def main():
         else 0
     )
 
-    # Average customer lifetime in months
     cancelled_subscriptions_df = subscriptions[
         subscriptions["status"] == "Cancelled"
     ].copy()
@@ -169,15 +160,10 @@ def main():
 
         average_lifetime_months = 0
 
-    # LTV = average revenue per customer × lifetime
     ltv = (
         average_revenue_per_customer
         * average_lifetime_months
     )
-
-    # ---------------------------------------------------------
-    # TOP KPI CARDS
-    # ---------------------------------------------------------
 
     col1, col2, col3, col4 = st.columns(4)
 
@@ -225,18 +211,13 @@ def main():
 
     st.divider()
 
-    # ---------------------------------------------------------
-    # REVENUE TREND
-    # ---------------------------------------------------------
-
     st.subheader("Revenue Trend")
 
     monthly_revenue = (
-        transactions
-        .assign(
-            month=transactions["transaction_date"]
-            .dt.to_period("M")
-            .astype(str)
+        transactions.assign(
+            month=transactions[
+                "transaction_date"
+            ].dt.to_period("M").astype(str)
         )
         .groupby("month")["amount"]
         .sum()
@@ -246,10 +227,6 @@ def main():
     st.line_chart(
         monthly_revenue.set_index("month")
     )
-
-    # ---------------------------------------------------------
-    # REVENUE BY TRANSACTION TYPE
-    # ---------------------------------------------------------
 
     st.subheader("Revenue by Transaction Type")
 
@@ -261,10 +238,6 @@ def main():
     )
 
     st.bar_chart(revenue_by_type)
-
-    # ---------------------------------------------------------
-    # PLAN AND INDUSTRY ANALYSIS
-    # ---------------------------------------------------------
 
     col1, col2 = st.columns(2)
 
@@ -283,10 +256,7 @@ def main():
 
         revenue_by_plan = (
             subscriptions[
-                [
-                    "customer_id",
-                    "plan"
-                ]
+                ["customer_id", "plan"]
             ]
             .merge(
                 customer_revenue,
@@ -315,10 +285,6 @@ def main():
 
     st.divider()
 
-    # ---------------------------------------------------------
-    # SUBSCRIPTION PERFORMANCE
-    # ---------------------------------------------------------
-
     st.subheader("Subscription Performance")
 
     subscription_summary = (
@@ -345,29 +311,29 @@ def main():
         .reset_index()
     )
 
-    subscription_summary["churn_rate_percent"] = (
-        subscription_summary["cancelled_subscriptions"]
-        / subscription_summary["total_subscriptions"]
+    subscription_summary[
+        "churn_rate_percent"
+    ] = (
+        subscription_summary[
+            "cancelled_subscriptions"
+        ]
+        / subscription_summary[
+            "total_subscriptions"
+        ]
         * 100
     )
 
     subscription_summary[
         "average_monthly_price"
-    ] = (
-        subscription_summary[
-            "average_monthly_price"
-        ]
-        .round(2)
-    )
+    ] = subscription_summary[
+        "average_monthly_price"
+    ].round(2)
 
     subscription_summary[
         "churn_rate_percent"
-    ] = (
-        subscription_summary[
-            "churn_rate_percent"
-        ]
-        .round(2)
-    )
+    ] = subscription_summary[
+        "churn_rate_percent"
+    ].round(2)
 
     st.dataframe(
         subscription_summary,
@@ -375,10 +341,6 @@ def main():
     )
 
     st.divider()
-
-    # ---------------------------------------------------------
-    # PRODUCT USAGE
-    # ---------------------------------------------------------
 
     st.subheader("Product Usage")
 
@@ -412,10 +374,6 @@ def main():
     )
 
     st.divider()
-
-    # ---------------------------------------------------------
-    # TOP CUSTOMERS
-    # ---------------------------------------------------------
 
     st.subheader("Top Customers by Revenue")
 
@@ -454,10 +412,6 @@ def main():
     )
 
     st.divider()
-
-    # ---------------------------------------------------------
-    # BUSINESS SUMMARY
-    # ---------------------------------------------------------
 
     st.subheader("Business Summary")
 
